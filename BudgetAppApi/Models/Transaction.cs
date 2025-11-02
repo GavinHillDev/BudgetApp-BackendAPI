@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.CompilerServices;
 
 namespace BudgetAppApi.Models
@@ -7,9 +8,10 @@ namespace BudgetAppApi.Models
     {
         public int Id { get; set; }
         [DataType(DataType.Text)]
-        public string TransactionName { get; set; }
+        public required string TransactionName { get; set; }
+        [Column(TypeName = "decimal(18, 2)")]
         [DataType(DataType.Currency)]
-        public decimal TransactionPrice { get; set; }
+        public required decimal TransactionPrice { get; set; }
 
         public User? User { get; set; }
 

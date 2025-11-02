@@ -6,13 +6,13 @@ namespace BudgetAppApi.Models
     {
         public int Id { get; set; }
         [DataType(DataType.Text)]
-        public string Username { get; set; }
+        public required string Username { get; set; }
         [DataType(DataType.Password)]
-        public string Password { get; set; }
+        public required string Password { get; set; }
         [DataType(DataType.EmailAddress)]
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
-        public ICollection<Transaction>? Transaction { get; set; }
+        public ICollection<Transaction>? Transactions { get; set; }
 
         public ICollection<TransactionCategory>? TransactionCategories { get; set; }
     }
