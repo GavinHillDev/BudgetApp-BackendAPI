@@ -7,8 +7,10 @@ namespace BudgetAppApi.Models
         public int Id { get; set; }
         [DataType(DataType.Text)]
         public required string Username { get; set; }
-        [DataType(DataType.Password)]
-        public required string Password { get; set; }
+
+        public required string PasswordHash { get; set; }
+
+
         [DataType(DataType.EmailAddress)]
         public required string Email { get; set; }
 

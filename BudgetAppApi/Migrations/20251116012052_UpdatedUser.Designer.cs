@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BudgetAppApi.Migrations
 {
     [DbContext(typeof(BudgetAppApiContext))]
-    [Migration("20251102210701_Update")]
-    partial class Update
+    [Migration("20251116012052_UpdatedUser")]
+    partial class UpdatedUser
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -91,7 +91,7 @@ namespace BudgetAppApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Password")
+                    b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
