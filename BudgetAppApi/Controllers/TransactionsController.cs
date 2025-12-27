@@ -1,12 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using BudgetAppApi.Data;
+using BudgetAppApi.Dtos;
+using BudgetAppApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BudgetAppApi.Data;
-using BudgetAppApi.Models;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
+using NuGet.Common;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http.Headers;
+using System.Reflection.PortableExecutable;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace BudgetAppApi.Controllers
 {
@@ -20,89 +28,71 @@ namespace BudgetAppApi.Controllers
         {
             _context = context;
         }
-
-        // GET: api/Transactions
         [HttpGet]
+        [Authorize(AuthenticationSchemes = "Bearer")]
         public async Task<ActionResult<IEnumerable<Transaction>>> GetTransaction()
         {
-            return await _context.Transaction.ToListAsync();
-        }
-
-        // GET: api/Transactions/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Transaction>> GetTransaction(int id)
-        {
-            var transaction = await _context.Transaction.FindAsync(id);
-
-            if (transaction == null)
-            {
-                return NotFound();
-            }
-
-            return transaction;
-        }
-
-        // PUT: api/Transactions/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutTransaction(int id, Transaction transaction)
-        {
-            if (id != transaction.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(transaction).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TransactionExists(id))
+            var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            if (id == null) return Unauthorized();
+            var user = await _context.User.FindAsync(int.Parse(id));
+            var transaction = await _context.Transaction.Where(t => t.User == user).Select
+                (t => new
                 {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+                    t.TransactionName,
+                    t.TransactionPrice,
+                    t.TransactionDate,
+                    t.Category.CategoryName,
+                    t.Id
+                }).ToListAsync();
+            return Ok(transaction);
         }
 
-        // POST: api/Transactions
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Transaction>> PostTransaction(Transaction transaction)
+        [HttpPost("createtransaction")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        public async Task<IActionResult> CreateTransaction([FromBody] TransactionDto transaction)
         {
-            _context.Transaction.Add(transaction);
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetTransaction", new { id = transaction.Id }, transaction);
-        }
+            var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
 
-        // DELETE: api/Transactions/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTransaction(int id)
-        {
-            var transaction = await _context.Transaction.FindAsync(id);
-            if (transaction == null)
+            if (id == null) return Unauthorized();
+            var user = await _context.User.FindAsync(int.Parse(id));
+
+            if (user == null) return NotFound();
+            var category = await _context.TransactionCategory.FirstOrDefaultAsync(c => c.CategoryName == transaction.TransactionCategory);
+            if (category == null)
             {
-                return NotFound();
+                var newcategory = new TransactionCategory { CategoryName = transaction.TransactionCategory, User = user };
+                category = newcategory;
             }
+            var newtransaction = new Transaction
+            {
+                TransactionName = transaction.TransactionName,
+                TransactionPrice = transaction.TransactionPrice,
+                TransactionDate = transaction.TransactionDate,
+                Category = category,
+                User = user
 
-            _context.Transaction.Remove(transaction);
+
+            };
+            _context.Transaction.Add(newtransaction);
             await _context.SaveChangesAsync();
-
-            return NoContent();
+            return Ok(new { message = "Transaction Created" });
         }
-
-        private bool TransactionExists(int id)
+        [HttpPost("deletetransaction")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        public async Task<IActionResult> DeleteTransaction([FromBody] int id_to_delete)
         {
-            return _context.Transaction.Any(e => e.Id == id);
+
+            var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+            if (id == null) return Unauthorized();
+            var user = await _context.User.FindAsync(int.Parse(id));
+            if (user == null) return NotFound();
+
+            var action = await _context.Transaction.FirstOrDefaultAsync(t => t.Id == id_to_delete);
+            _context.Transaction.Remove(action);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Transaction Deleted" });
         }
     }
 }

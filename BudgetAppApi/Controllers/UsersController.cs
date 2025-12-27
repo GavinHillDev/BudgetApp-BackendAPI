@@ -149,7 +149,7 @@ namespace BudgetAppApi.Controllers
 
             // Generate JWT
             var token = _jwtService.GenerateToken(user);
-
+            //Console.WriteLine(token);
             return Ok(new { token });
         }
 
@@ -157,12 +157,14 @@ namespace BudgetAppApi.Controllers
         [Authorize(AuthenticationSchemes = "Bearer")]
         public async Task<IActionResult> GetCurrentUser()
         {
-            var userId = User.FindFirst("sub")?.Value;
-            if (userId == null) return Unauthorized();
-
-            var user = await _context.User.FindAsync(int.Parse(userId));
+            Console.WriteLine("Test");
+            var id = User.Claims.First().Value;
+            Console.WriteLine(id);
+            if (id == null) return Unauthorized();
+            var user = await _context.User.FindAsync(int.Parse(id));
             if (user == null) return NotFound();
-
+            if (user == null) Console.WriteLine("User was not found");
+            Console.WriteLine($"{user} LoginAPI");
             return Ok(new { user.Id, user.Username, user.Email });
         }
 

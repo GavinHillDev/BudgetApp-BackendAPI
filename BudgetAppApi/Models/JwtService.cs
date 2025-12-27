@@ -38,7 +38,6 @@ namespace BudgetAppApi.Models
                 ),
                 signingCredentials: creds
             );
-
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
