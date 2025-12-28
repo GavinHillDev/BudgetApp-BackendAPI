@@ -78,6 +78,39 @@ namespace BudgetAppApi.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Transaction Created" });
         }
+
+        [HttpPut("{current_id}")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        public async Task<IActionResult> UpdateTransaction([FromBody] TransactionDto transaction, int current_id)
+        {
+
+            var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+            if (id == null) return Unauthorized();
+            var user = await _context.User.FindAsync(int.Parse(id));
+
+            if (user == null) return NotFound();
+            var category = await _context.TransactionCategory.FirstOrDefaultAsync(c => c.CategoryName == transaction.TransactionCategory);
+            if (category == null)
+            {
+                var newcategory = new TransactionCategory { CategoryName = transaction.TransactionCategory, User = user };
+                category = newcategory;
+            }
+            var action = await _context.Transaction.FirstOrDefaultAsync(t => t.Id == current_id);
+            
+            if (current_id == null)
+            {
+                return NotFound();
+            }
+            action.TransactionName = transaction.TransactionName;
+            action.TransactionPrice = transaction.TransactionPrice;
+            action.TransactionDate = transaction.TransactionDate;
+            action.Category = category;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Transaction Created" });
+        }
+
         [HttpPost("deletetransaction")]
         [Authorize(AuthenticationSchemes = "Bearer")]
         public async Task<IActionResult> DeleteTransaction([FromBody] int id_to_delete)
